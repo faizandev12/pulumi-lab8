@@ -24,8 +24,8 @@ jobs:
     - name: Set up AWS credentials using OIDC
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::664561225373:role/pulumi-role  # Replace with your actual role ARN
-        aws-region: us-west-2  # Replace with your AWS region
+        role-to-assume: arn:aws:iam::664561225373:role/pulumi-role
+        aws-region: us-east-1  # Replace with your AWS region
 
     - name: Deploy Pulumi Stack
       uses: pulumi/actions@v4
