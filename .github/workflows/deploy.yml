@@ -24,7 +24,7 @@ jobs:
         id: get_env
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        run: echo "PULUMI_ENV=$(pulumi config get environment)" >> $GITHUB_ENV
+          PULUMI_ESC_ENVIRONMENT: lab8test/dev
 
       - name: Run Pulumi Up
         uses: pulumi/actions@v4
@@ -34,4 +34,4 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           # This must exactly match the ESC environment configured in Pulumi (e.g., lab8test/dev)
-          PULUMI_ESC_ENVIRONMENT: lab8test/${{ env.PULUMI_ENV }}
+          PULUMI_ESC_ENVIRONMENT: lab8test/dev
