@@ -23,5 +23,5 @@ jobs:
           stack-name: dev
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          # Set your Pulumi ESC environment that has been configured to use OIDC
-          PULUMI_ESC_ENVIRONMENT: lab8test/${{ env.PULUMI_ENV }}
+        
+        run: echo "PULUMI_ENV=$(pulumi config get environment)" >> $GITHUB_ENV
