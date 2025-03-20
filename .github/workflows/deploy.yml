@@ -6,22 +6,32 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # Required for OIDC token retrieval
+      id-token: write   # Required to generate an OIDC token
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-      - run: npm install  # Install Pulumi SDK dependencies
+
+      - name: Install Dependencies
+        run: npm install  # Installs Pulumi SDK and other dependencies
+
       - name: Get Pulumi Environment
         id: get_env
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: echo "PULUMI_ENV=$(pulumi config get environment)" >> $GITHUB_ENV
-      - uses: pulumi/actions@v4
+
+      - name: Run Pulumi Up
+        uses: pulumi/actions@v4
         with:
           command: up
           stack-name: dev
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        
-        run: echo "PULUMI_ENV=$(pulumi config get environment)" >> $GITHUB_ENV
+          # This must exactly match the ESC environment configured in Pulumi (e.g., lab8test/dev)
+          PULUMI_ESC_ENVIRONMENT: lab8test/${{ env.PULUMI_ENV }}
