@@ -13,13 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up AWS credentials using OIDC
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::664561225373:role/pulumi-role
-          aws-region: us-east-1
-          role-session-name: GitHubActionsSession
-          audience: sts.amazonaws.com
+
 
       - name: Install dependencies
         run: |
