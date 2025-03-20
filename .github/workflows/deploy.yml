@@ -17,4 +17,4 @@ jobs:
           stack-name: dev
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_ESC_ENVIRONMENT: faizandev12/prod-oidc  # Add your ESC environment name
+          PULUMI_ESC_ENVIRONMENT: lab8test/dev  # Add your ESC environment name
