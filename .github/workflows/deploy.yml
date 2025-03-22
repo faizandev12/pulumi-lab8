@@ -1,25 +1,25 @@
 name: Deploy infrastructure
-
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up AWS credentials via OIDC
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         role-to-assume: arn:aws:iam::664561225373:role/oidclab8
         aws-region: us-east-1
         role-session-name: GitHubActionsSession
-        audience: sts.amazonaws.com
 
     - name: Install dependencies
       run: npm install
@@ -33,5 +33,3 @@ jobs:
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         AWS_REGION: us-east-1
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        DEBUG: "true"
