@@ -1,2 +1,4 @@
+
 config:
-  aws:region: us-east-1
+  aws:profile: jabri-devops-test-user
+  aws:roleArn: arn:aws:iam::664561225373:role/pulumi-role
