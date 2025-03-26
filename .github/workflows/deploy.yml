@@ -1,4 +1,4 @@
-name: Deploy infrastructure
+name: Deploy Infrastructure
 on:
   push:
     branches: [master]
@@ -8,18 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read
+      contents: read    # For checkout
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
       with:
-        role-to-assume: arn:aws:iam::664561225373:role/oidclab8
-        aws-region: us-east-1
-        role-session-name: GitHubActionsSession
+        node-version: 20
 
     - name: Install dependencies
       run: npm install
@@ -32,4 +30,4 @@ jobs:
         pulumi-version: 3.157.0
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        AWS_REGION: us-east-1
+        PULUMI_ESC_ENVIRONMENT: lab8test/dev  # ESC environment name
