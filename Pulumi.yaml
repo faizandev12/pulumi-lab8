@@ -1,10 +1,11 @@
 name: lab8test
-description: test
+description: Static website using S3 and CloudFront
 runtime:
   name: nodejs
   options:
+    typescript: true  # Explicitly enable TypeScript
     packagemanager: npm
 config:
+  aws:region: us-east-1  # Required base configuration
   pulumi:tags:
-    value:
-      pulumi:template: aws-typescript
+    pulumi:template: aws-typescript
