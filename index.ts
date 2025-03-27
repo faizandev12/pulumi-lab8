@@ -1,26 +1,39 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
-// Configure AWS provider using ESC environment credentials
 const awsProvider = new aws.Provider("aws-provider", {
-  region: "us-east-1", // Must match ESC environment region
+  region: "us-east-1",
 });
 
-// Create S3 bucket for static website hosting
 const bucket = new aws.s3.Bucket("static-website-bucket", {
   website: {
     indexDocument: "index.html",
   },
-  acl: "public-read", // Required for public access
+  // Set object ownership to disable ACLs
+  objectOwnership: "BucketOwnerEnforced",
 }, { provider: awsProvider });
 
-// Upload index.html with proper permissions
+// Bucket Policy for public read access
+const bucketPolicy = new aws.s3.BucketPolicy("bucket-policy", {
+  bucket: bucket.id,
+  policy: bucket.arn.apply(arn => JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [{
+      Effect: "Allow",
+      Principal: "*",
+      Action: ["s3:GetObject"],
+      Resource: [`${arn}/*`],
+    }],
+  })),
+}, { provider: awsProvider });
+
+// Upload index.html (no ACL needed)
 const indexHtml = new aws.s3.BucketObject("index.html", {
   bucket: bucket.id,
   source: new pulumi.asset.FileAsset("index.html"),
   contentType: "text/html",
-  acl: "public-read", // Required for public access
 }, { provider: awsProvider });
+
 
 // Create CloudFront distribution
 const distribution = new aws.cloudfront.Distribution("website-cdn", {
