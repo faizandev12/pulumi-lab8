@@ -1,6 +1,7 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
+// First, ensure you're using @pulumi/aws >=5.0.0 in your package.json
 const awsProvider = new aws.Provider("aws-provider", {
   region: "us-east-1",
 });
@@ -9,11 +10,11 @@ const bucket = new aws.s3.Bucket("static-website-bucket", {
   website: {
     indexDocument: "index.html",
   },
-  // Set object ownership to disable ACLs
+  // CORRECT: Available in newer AWS provider versions
   objectOwnership: "BucketOwnerEnforced",
 }, { provider: awsProvider });
 
-// Bucket Policy for public read access
+// Bucket Policy remains the same
 const bucketPolicy = new aws.s3.BucketPolicy("bucket-policy", {
   bucket: bucket.id,
   policy: bucket.arn.apply(arn => JSON.stringify({
