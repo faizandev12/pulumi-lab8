@@ -1,42 +1,38 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
-// First, ensure you're using @pulumi/aws >=5.0.0 in your package.json
+// Configure AWS provider with explicit settings
 const awsProvider = new aws.Provider("aws-provider", {
   region: "us-east-1",
+  version: "6.72.0" // Force provider version
 });
 
+// Create S3 bucket with modern security settings
 const bucket = new aws.s3.Bucket("static-website-bucket", {
   website: {
     indexDocument: "index.html",
   },
-  // CORRECT: Available in newer AWS provider versions
+  // Security-critical parameter for new AWS buckets
   objectOwnership: "BucketOwnerEnforced",
+  
+  // Remove all ACL references
 }, { provider: awsProvider });
 
-// Bucket Policy remains the same
+// Create bucket policy for public access
 const bucketPolicy = new aws.s3.BucketPolicy("bucket-policy", {
   bucket: bucket.id,
-  policy: bucket.arn.apply(arn => JSON.stringify({
+  policy: {
     Version: "2012-10-17",
     Statement: [{
       Effect: "Allow",
       Principal: "*",
       Action: ["s3:GetObject"],
-      Resource: [`${arn}/*`],
+      Resource: [pulumi.interpolate`${bucket.arn}/*`],
     }],
-  })),
+  },
 }, { provider: awsProvider });
 
-// Upload index.html (no ACL needed)
-const indexHtml = new aws.s3.BucketObject("index.html", {
-  bucket: bucket.id,
-  source: new pulumi.asset.FileAsset("index.html"),
-  contentType: "text/html",
-}, { provider: awsProvider });
-
-
-// Create CloudFront distribution
+// CloudFront distribution configuration
 const distribution = new aws.cloudfront.Distribution("website-cdn", {
   enabled: true,
   origins: [{
@@ -68,12 +64,12 @@ const distribution = new aws.cloudfront.Distribution("website-cdn", {
   viewerCertificate: {
     cloudfrontDefaultCertificate: true,
   },
-  waitForDeployment: false, // Prevent CI/CD timeouts
+  waitForDeployment: false,
 }, { provider: awsProvider });
 
 // Export URLs
-export const websiteUrl = distribution.domainName;
-export const s3BucketUrl = bucket.websiteEndpoint;
+export const bucketUrl = bucket.websiteEndpoint;
+export const distributionUrl = distribution.domainName;
 
 // Export URLs
 export const bucketUrl = bucket.websiteEndpoint;
