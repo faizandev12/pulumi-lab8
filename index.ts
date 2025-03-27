@@ -1,61 +1,69 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
-// Initialize the AWS provider using the profile
-const provider = new aws.Provider("aws", {
-    profile: "jabri-devops-test-user", // Use your profile name here
-    region: "us-east-1", // Specify your desired AWS region
+// 1. AWS Provider Configuration - Use environment variables instead of profile
+const awsProvider = new aws.Provider("aws-provider", {
+  region: "us-east-1", // Remove profile for CI/CD usage
 });
 
-// Create an S3 bucket
+// 2. S3 Bucket with required security settings
 const bucket = new aws.s3.Bucket("static-web-jabri-bucket", {
-    website: {
-        indexDocument: "index.html",
-    },
-}, { provider });
+  website: {
+    indexDocument: "index.html",
+  },
+  objectOwnership: "BucketOwnerEnforced", // Required security setting
+}, { provider: awsProvider });
 
-// Upload a sample index.html
-const bucketObject = new aws.s3.BucketObject("index.html", {
-    bucket: bucket.id,
-    source: new pulumi.asset.FileAsset("index.html"), // Make sure index.html is in your project folder
-    contentType: "text/html",
-}, { provider });
+// 3. Bucket Policy for public access
+const bucketPolicy = new aws.s3.BucketPolicy("bucket-policy", {
+  bucket: bucket.id,
+  policy: bucket.arn.apply(arn => JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [{
+      Effect: "Allow",
+      Principal: "*",
+      Action: ["s3:GetObject"],
+      Resource: [`${arn}/*`]
+    }]
+  }))
+}, { provider: awsProvider });
 
-// Create CloudFront distribution
+// 4. CloudFront Distribution (fixed origin configuration)
 const distribution = new aws.cloudfront.Distribution("static-website-distribution", {
-    enabled: true,
-    origins: [{
-        originId: bucket.arn,
-        domainName: bucket.websiteEndpoint,
-        customOriginConfig: {
-            originProtocolPolicy: "http-only",
-            httpPort: 80,
-            httpsPort: 443,
-            originSslProtocols: ["TLSv1.2"],
-        },
-    }],
-    defaultRootObject: "index.html",
-    defaultCacheBehavior: {
-        targetOriginId: bucket.arn,
-        viewerProtocolPolicy: "redirect-to-https",
-        allowedMethods: ["GET", "HEAD"],
-        cachedMethods: ["GET", "HEAD"],
-        forwardedValues: {
-            queryString: false,
-            cookies: { forward: "none" },
-        },
+  enabled: true,
+  origins: [{
+    originId: pulumi.interpolate`s3-${bucket.id}`, // Fixed origin ID format
+    domainName: bucket.websiteEndpoint,
+    customOriginConfig: {
+      originProtocolPolicy: "http-only",
+      httpPort: 80,
+      httpsPort: 443,
+      originSslProtocols: ["TLSv1.2"],
     },
-    restrictions: {
-        geoRestriction: {
-            restrictionType: "none",
-        },
+  }],
+  defaultRootObject: "index.html",
+  defaultCacheBehavior: {
+    targetOriginId: pulumi.interpolate`s3-${bucket.id}`,
+    viewerProtocolPolicy: "redirect-to-https",
+    allowedMethods: ["GET", "HEAD", "OPTIONS"],
+    cachedMethods: ["GET", "HEAD", "OPTIONS"],
+    forwardedValues: {
+      queryString: false,
+      cookies: { forward: "none" },
     },
-    viewerCertificate: {
-        cloudfrontDefaultCertificate: true,
+  },
+  restrictions: {
+    geoRestriction: {
+      restrictionType: "none",
     },
-}, { provider });
+  },
+  viewerCertificate: {
+    cloudfrontDefaultCertificate: true,
+  },
+}, { provider: awsProvider });
 
 // Export URLs
 export const bucketUrl = bucket.websiteEndpoint;
+export const distributionUrl = distribution.domainName;
 export const distributionUrl = distribution.domainName;
 
